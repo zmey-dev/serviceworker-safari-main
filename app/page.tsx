@@ -96,51 +96,60 @@ export default function Home() {
 
   const requestPermission = async () => {
     try {
-      if (isPwaSupported)
-        Notification.requestPermission().then(async (result) => {
-          if (result === "granted") {
-            setIsPushGranted(true);
+      if (isPwaSupported) {
+        const permissionResult = await Notification.requestPermission();
+        console.log("Permission result:", permissionResult);
 
-            // Reload to make sure page is in the correct state with new permissions
-            location.reload();
+        if (permissionResult === "granted") {
+          setIsPushGranted(true);
 
-            // Permission state *should* match "granted" after above operation, but we check again
-            // for safety. This is necessary if the subscription request is elsewhere in your flow
-            const pm = await registration?.pushManager?.permissionState();
-            if (pm === "granted")
-              // https://developer.mozilla.org/en-US/docs/Web/API/PushManager
-              // Requires HTTPS and a valid service worker to receive push notifications
-              registration?.pushManager
-                .subscribe({
-                  userVisibleOnly: true,
-                  applicationServerKey: urlBase64ToUint8Array(
-                    "BG5Z6bYGj2JdqPSoYwfFvC2xbhGpIqXurBoinER9wEyO7s8TQ4xcpqFG6E9ZowBy8MG6_06E02KbPQPkM1705Fk"
-                  ),
-                })
-                .then(
-                  (subscription) => {
-                    console.log("------------------------------------------->");
+          // Check if we already have push manager permission
+          const pm = await registration?.pushManager?.permissionState();
+          console.log("Push manager permission state:", pm);
 
-                    console.log(subscription.endpoint);
-                    // The push subscription details needed by the application
-                    // server are now available, and can be sent to it using,
-                    // for example, the fetch() API.
-                  },
-                  (err) => console.warn(err)
-                );
-          } else {
-            alert(
-              "We weren't allowed to send you notifications. Permission state is: " +
-                result
-            );
+          if (pm === "granted") {
+            console.log("Attempting to subscribe to push notifications...");
+
+            try {
+              const subscription = await registration?.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(
+                  "BG5Z6bYGj2JdqPSoYwfFvC2xbhGpIqXurBoinER9wEyO7s8TQ4xcpqFG6E9ZowBy8MG6_06E02KbPQPkM1705Fk"
+                ),
+              });
+
+              console.log("------------------------------------------->");
+              console.log("Subscription successful!");
+              console.log("Endpoint:", subscription);
+              console.log(
+                "Full subscription object:",
+                JSON.stringify(subscription)
+              );
+
+              // Don't reload here - it interrupts the console logs
+              // Instead, update UI to show success
+
+              return; // Success - don't reload
+            } catch (subscriptionError) {
+              console.error("Push subscription error:", subscriptionError);
+            }
           }
-        });
-      else {
+
+          // Only reload if we didn't successfully subscribe above
+          console.log("Reloading page to update permissions...");
+          location.reload();
+        } else {
+          alert(
+            "We weren't allowed to send you notifications. Permission state is: " +
+              permissionResult
+          );
+        }
+      } else {
         // Alert the user that they need to install the web page to use notifications
         alert("You need to install this web page to use notifications");
       }
     } catch (err) {
-      console.log(err);
+      console.error("Permission request error:", err);
     }
   };
 
