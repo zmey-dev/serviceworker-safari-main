@@ -8,7 +8,19 @@ import {
   isStorageSupported,
 } from "./swSupport";
 import { use, useEffect, useState } from "react";
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
 
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  console.log("Converted VAPID key to Uint8Array, length:", outputArray.length);
+  return outputArray;
+}
 export default function Home() {
   const [count, setCount] = useState(0);
 
@@ -101,7 +113,9 @@ export default function Home() {
               registration?.pushManager
                 .subscribe({
                   userVisibleOnly: true,
-                  applicationServerKey: "HELLOWORLD",
+                  applicationServerKey: urlBase64ToUint8Array(
+                    "BG5Z6bYGj2JdqPSoYwfFvC2xbhGpIqXurBoinER9wEyO7s8TQ4xcpqFG6E9ZowBy8MG6_06E02KbPQPkM1705Fk"
+                  ),
                 })
                 .then(
                   (subscription) => {
