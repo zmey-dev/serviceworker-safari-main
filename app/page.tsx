@@ -1,8 +1,12 @@
-'use client'
+"use client";
 
 import Image from "next/image";
 
-import { isNotifySupported, isGeoSupported, isStorageSupported } from "./swSupport";
+import {
+  isNotifySupported,
+  isGeoSupported,
+  isStorageSupported,
+} from "./swSupport";
 import { use, useEffect, useState } from "react";
 
 export default function Home() {
@@ -12,37 +16,43 @@ export default function Home() {
   const [isPwaSupported, setIsPwaSupported] = useState(false);
   const [isPushGranted, setIsPushGranted] = useState(false);
 
-  const [currentGeo, setCurrentGeo] = useState<GeolocationPosition | null>(null);
+  const [currentGeo, setCurrentGeo] = useState<GeolocationPosition | null>(
+    null
+  );
   const [secretText, setSecretText] = useState<string>();
 
-  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [registration, setRegistration] =
+    useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
     // Check if all the features we want are available
-    // In practice, it is better to check for each feature separately and allow users to opt-in 
+    // In practice, it is better to check for each feature separately and allow users to opt-in
     // to each feature on demand.
-    const hasRequisite = isNotifySupported() && isGeoSupported() && isStorageSupported();
+    const hasRequisite =
+      isNotifySupported() && isGeoSupported() && isStorageSupported();
     setIsPwaSupported(hasRequisite);
 
     if (window.serwist !== undefined && hasRequisite) {
       try {
-        setIsPushGranted(Notification.permission === "granted")
+        setIsPushGranted(Notification.permission === "granted");
       } catch (err) {
-        console.info(err)
+        console.info(err);
       }
 
       const beforeinstallprompt = (event: any) => {
         console.log("Before install prompt: ", event);
-      }
+      };
 
       const appinstalled = (event: any) => {
         console.log("App installed: ", event);
-      }
+      };
 
       // Register the service worker
-      window.serwist.register()
+      window.serwist
+        .register()
         .then((result: any) => setRegistration(result))
-        .catch((err: any) => alert(err)).catch((err: Error) => console.warn(err))
+        .catch((err: any) => alert(err))
+        .catch((err: Error) => console.warn(err));
 
       window.addEventListener("beforeinstallprompt", beforeinstallprompt);
       window.addEventListener("appinstalled", appinstalled);
@@ -50,22 +60,27 @@ export default function Home() {
       return () => {
         window.removeEventListener("beforeinstallprompt", beforeinstallprompt);
         window.removeEventListener("appinstalled", appinstalled);
-      }
+      };
     } else {
-      console.warn("Serwist is not available or the requisite features are not available")
+      console.warn(
+        "Serwist is not available or the requisite features are not available"
+      );
     }
   }, []);
 
   useEffect(() => {
-    console.info("Service worker registration state: ", registration?.active?.state)
-    setIsAppInstalled(registration?.active?.state === "activated")
+    console.info(
+      "Service worker registration state: ",
+      registration?.active?.state
+    );
+    setIsAppInstalled(registration?.active?.state === "activated");
 
-    setServiceStorage()
-  }, [registration?.active?.state])
+    setServiceStorage();
+  }, [registration?.active?.state]);
 
   useEffect(() => {
-    navigator.setAppBadge && navigator.setAppBadge(count)
-  }, [count])
+    navigator.setAppBadge && navigator.setAppBadge(count);
+  }, [count]);
 
   const requestPermission = async () => {
     try {
@@ -79,37 +94,49 @@ export default function Home() {
 
             // Permission state *should* match "granted" after above operation, but we check again
             // for safety. This is necessary if the subscription request is elsewhere in your flow
-            const pm = await registration?.pushManager?.permissionState()
+            const pm = await registration?.pushManager?.permissionState();
             if (pm === "granted")
               // https://developer.mozilla.org/en-US/docs/Web/API/PushManager
               // Requires HTTPS and a valid service worker to receive push notifications
-              registration?.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: "HELLOWORLD",
-              }).then((subscription) => {
-                console.log(subscription.endpoint);
-                // The push subscription details needed by the application
-                // server are now available, and can be sent to it using,
-                // for example, the fetch() API.
-              }, (err) => console.warn(err))
+              registration?.pushManager
+                .subscribe({
+                  userVisibleOnly: true,
+                  applicationServerKey: "HELLOWORLD",
+                })
+                .then(
+                  (subscription) => {
+                    console.log("------------------------------------------->");
+
+                    console.log(subscription.endpoint);
+                    // The push subscription details needed by the application
+                    // server are now available, and can be sent to it using,
+                    // for example, the fetch() API.
+                  },
+                  (err) => console.warn(err)
+                );
           } else {
-            alert("We weren't allowed to send you notifications. Permission state is: " + result);
+            alert(
+              "We weren't allowed to send you notifications. Permission state is: " +
+                result
+            );
           }
-        })
+        });
       else {
-        // Alert the user that they need to install the web page to use notifications 
-        alert('You need to install this web page to use notifications');
+        // Alert the user that they need to install the web page to use notifications
+        alert("You need to install this web page to use notifications");
       }
     } catch (err) {
-      console.log(err)
+      console.log(err);
     }
-  }
+  };
 
   const randomNotification = async () => {
-    if (!registration) return
+    if (!registration) return;
 
     try {
-      const result = await fetch("https://randomuser.me/api/?nat=us,fr,gb,mx,in")
+      const result = await fetch(
+        "https://randomuser.me/api/?nat=us,fr,gb,mx,in"
+      )
         .then((response) => response.json())
         .then((data) => data.results[0]);
 
@@ -121,8 +148,8 @@ export default function Home() {
           {
             action: "open",
             title: "Open the app",
-          }
-        ]
+          },
+        ],
       };
 
       // You must use the service worker notification to show the notification
@@ -131,13 +158,13 @@ export default function Home() {
       await registration.showNotification("Message", options);
 
       // Set the badge count
-      setCount(count + 1)
+      setCount(count + 1);
     } catch (err: any) {
-      console.log("Encountered a problem: " + err.message)
-      console.log(err)
-      alert(err)
+      console.log("Encountered a problem: " + err.message);
+      console.log(err);
+      alert(err);
     }
-  }
+  };
 
   const clearNotifications = async () => {
     // clear app badge
@@ -145,48 +172,56 @@ export default function Home() {
     setCount(0);
 
     // close notifcations (where supported)
-    await registration?.getNotifications().then((notifications) => { notifications.forEach((notification) => notification.close()) });
-  }
+    await registration?.getNotifications().then((notifications) => {
+      notifications.forEach((notification) => notification.close());
+    });
+  };
 
   const requestCurrentPosition = async () => {
     if (isGeoSupported()) {
       navigator.geolocation.getCurrentPosition((position) => {
         console.log(position.coords.latitude, position.coords.longitude);
         setCurrentGeo(position);
-      })
+      });
     } else {
-      console.warn("Geolocation is not supported")
+      console.warn("Geolocation is not supported");
     }
-  }
+  };
 
   const setServiceStorage = async () => {
     if (isStorageSupported()) {
       navigator.storage.persist().then((persistent) => {
         if (persistent) {
-          console.log("Storage will not be cleared except by explicit user action");
+          console.log(
+            "Storage will not be cleared except by explicit user action"
+          );
         } else {
-          console.log("Storage may be cleared by the UA under storage pressure.");
+          console.log(
+            "Storage may be cleared by the UA under storage pressure."
+          );
         }
-      })
+      });
       // Service worker is not required to use localStorage
       // https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage
-      localStorage.setItem("Test", "it's a secret to everybody")
+      localStorage.setItem("Test", "it's a secret to everybody");
     } else {
-      console.warn("Storage is not supported")
+      console.warn("Storage is not supported");
     }
-  }
+  };
 
   const getServiceStorage = async () => {
-    const saved = localStorage.getItem('Test');
-    if (saved) setSecretText(saved)
-  }
+    const saved = localStorage.getItem("Test");
+    if (saved) setSecretText(saved);
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
         <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
           {currentGeo && (
-            <code className="font-mono font-bold w-100">{currentGeo.coords.latitude}, {currentGeo.coords.longitude}</code>
+            <code className="font-mono font-bold w-100">
+              {currentGeo.coords.latitude}, {currentGeo.coords.longitude}
+            </code>
           )}
         </p>
         <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
@@ -209,35 +244,34 @@ export default function Home() {
         </div>
       </div>
 
-      {isAppInstalled && (<button
-        className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-      >
-        <h2 className={`mb-3 text-2xl font-semibold`}>
-          Installed{" "}
-          <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-            ✔
-          </span>
-        </h2>
-        <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-          Service worker is registered.
-        </p>
-      </button>)}
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        {!isPwaSupported && (<button
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-        >
+      {isAppInstalled && (
+        <button className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
           <h2 className={`mb-3 text-2xl font-semibold`}>
             Installed{" "}
             <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              ✖️
+              ✔
             </span>
           </h2>
           <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Install this page as an app to get started
+            Service worker is registered.
           </p>
-        </button>)}
+        </button>
+      )}
 
+      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
+        {!isPwaSupported && (
+          <button className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
+            <h2 className={`mb-3 text-2xl font-semibold`}>
+              Installed{" "}
+              <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+                ✖️
+              </span>
+            </h2>
+            <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
+              Install this page as an app to get started
+            </p>
+          </button>
+        )}
 
         {!isPushGranted && (
           <button
@@ -253,7 +287,8 @@ export default function Home() {
             <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
               Enable Push Notifications
             </p>
-          </button>)}
+          </button>
+        )}
 
         {isAppInstalled && isPushGranted && (
           <button
@@ -269,7 +304,8 @@ export default function Home() {
             <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
               Test Push Notifications
             </p>
-          </button>)}
+          </button>
+        )}
 
         {isAppInstalled && isPushGranted && (
           <button
@@ -285,37 +321,42 @@ export default function Home() {
             <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
               Clear Badge Counter
             </p>
-          </button>)}
+          </button>
+        )}
 
-        {isAppInstalled && isGeoSupported() && (<button
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          onClick={() => requestCurrentPosition()}
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Location{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              ✔
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Get current coordinates.
-          </p>
-        </button>)}
+        {isAppInstalled && isGeoSupported() && (
+          <button
+            className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+            onClick={() => requestCurrentPosition()}
+          >
+            <h2 className={`mb-3 text-2xl font-semibold`}>
+              Location{" "}
+              <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+                ✔
+              </span>
+            </h2>
+            <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
+              Get current coordinates.
+            </p>
+          </button>
+        )}
 
-        {isAppInstalled && isStorageSupported() && (<button
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          onClick={() => getServiceStorage()}
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Storage{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              ✔
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Reveal a storage entry.
-          </p>
-        </button>)}
+        {isAppInstalled && isStorageSupported() && (
+          <button
+            className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+            onClick={() => getServiceStorage()}
+          >
+            <h2 className={`mb-3 text-2xl font-semibold`}>
+              Storage{" "}
+              <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+                ✔
+              </span>
+            </h2>
+            <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
+              Reveal a storage entry.
+            </p>
+          </button>
+        )}
       </div>
     </main>
   );
